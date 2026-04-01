@@ -277,6 +277,25 @@ pub fn capture_pane(target: &str) -> Result<CapturedPane, TmuxError> {
     })
 }
 
+/// Create a new tmux session with the given name and working directory,
+/// then send the `claude` command to start Claude Code in the new pane.
+pub fn create_session(name: &str, working_dir: &str) -> Result<(), TmuxError> {
+    ensure_server()?;
+
+    // Check for duplicate session name
+    let sessions = list_sessions()?;
+    if sessions.iter().any(|s| s.name == name) {
+        return Err(TmuxError::CommandFailed {
+            stderr: format!("Session '{}' already exists", name),
+            exit_code: None,
+        });
+    }
+
+    run_tmux(&["new-session", "-d", "-s", name, "-c", working_dir])?;
+    run_tmux(&["send-keys", "-t", name, "claude", "Enter"])?;
+    Ok(())
+}
+
 /// Return the tty of the first client attached to a tmux session, if any.
 pub fn list_client_tty(session_name: &str) -> Option<String> {
     run_tmux(&["list-clients", "-t", session_name, "-F", "#{client_tty}"])

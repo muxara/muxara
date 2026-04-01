@@ -23,7 +23,8 @@ muxara/
 │   └── components/
 │       ├── SessionGrid.tsx      Grid layout for session cards, handles loading/error/empty states
 │       ├── SessionCard.tsx      Two-zone card: orientation (status, title, dir, recency) + context (output)
-│       └── StatusBadge.tsx      Colored status dot per session state
+│       ├── StatusBadge.tsx      Colored status dot per session state
+│       └── NewSessionButton.tsx "+" button to create new Claude Code sessions
 ├── src-tauri/                   Backend (Rust)
 │   ├── src/
 │   │   ├── main.rs              Entry point, delegates to lib.rs
@@ -60,6 +61,7 @@ The frontend is a React SPA bundled by Vite and rendered inside the Tauri webvie
   - **Context zone** (bottom, separated by a subtle divider): last terminal output lines in monospace.
   - State styling (left border color, background tint) is driven by a `stateConfig` record keyed by `SessionState`.
 - **`StatusBadge`** — colored dot indicating session state. Working state pulses via `animate-pulse`.
+- **`NewSessionButton`** — "+" button in the app header. Clicking it expands an inline form with an optional session name and a required working directory. The directory is selected via a native OS folder picker (`@tauri-apps/plugin-dialog`). The Create button is disabled until a directory is chosen. Auto-generates a timestamped name if none provided. The new session appears in the dashboard on the next poll cycle.
 
 ### Types (`src/types.ts`)
 
@@ -117,6 +119,8 @@ Frontend-facing types serialized via serde:
 - `Session` — the full session object sent to the frontend
 
 ### `commands.rs` — Tauri commands
+
+`create_session(name, working_dir)` creates a new tmux session and starts Claude Code in it. Requires a non-empty `working_dir`. Ensures the tmux server is running, checks for duplicate session names (returns an error if one exists), creates the session with `tmux new-session -d -s <name> -c <dir>`, then sends the `claude` command via `tmux send-keys`. The session auto-appears in the dashboard on the next poll cycle.
 
 `focus_session(session_id)` opens a new iTerm2 window attached to the tmux session. It extracts the session name from the pane target ID, verifies the session exists, then uses AppleScript (`osascript`) to launch iTerm2 with `tmux attach -t <session>`. Returns an error string if the session is not found or the terminal fails to open.
 

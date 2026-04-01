@@ -52,6 +52,6 @@ Every ticket must include documentation updates alongside code changes. This kee
 
 The Tauri scaffold is in place (ticket #4), the tmux integration layer is implemented (ticket #5), the state classifier is wired up (ticket #6), the frontend is connected to live backend data (ticket #7), and session cards use the two-zone layout with status indicators (ticket #8). The Rust backend can discover tmux sessions, capture pane output with ANSI stripping, detect running Claude processes, classify session state (NeedsInput, Working, Idle, Errored, Unknown), and maintain an in-memory session store that reconciles with live tmux state. The classifier uses regex-based pattern matching on pane output with temporal delta detection and Working→Idle debounce to prevent flicker. The frontend polls the backend every 1.5s via a `useSessions` hook and renders live session data with loading, error, and empty states. Session cards display an orientation zone (status dot, title, working directory, state + recency) and a context zone (last terminal output lines), with NeedsInput sessions sorted to the top.
 
-Clicking a session card opens a new Terminal.app window attached to that tmux session (ticket #9).
+Clicking a session card opens a new iTerm2 window attached to that tmux session (ticket #9). A "+" button in the header creates new Claude Code sessions with an optional name and working directory (ticket #10).
 
-**Not yet implemented:** attention signals, new session provisioning ("+" button).
+**Not yet implemented:** attention signals, kill/rename sessions.

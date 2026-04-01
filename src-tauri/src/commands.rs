@@ -87,6 +87,14 @@ end tell"#,
 }
 
 #[tauri::command]
+pub fn create_session(name: String, working_dir: String) -> Result<(), String> {
+    if working_dir.is_empty() {
+        return Err("Working directory is required".to_string());
+    }
+    client::create_session(&name, &working_dir).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub fn get_sessions(store: State<'_, Mutex<SessionStore>>) -> Vec<Session> {
     let tmux_alive = client::is_tmux_alive();
 
