@@ -277,6 +277,20 @@ pub fn capture_pane(target: &str) -> Result<CapturedPane, TmuxError> {
     })
 }
 
+/// Return the tty of the first client attached to a tmux session, if any.
+pub fn list_client_tty(session_name: &str) -> Option<String> {
+    run_tmux(&["list-clients", "-t", session_name, "-F", "#{client_tty}"])
+        .ok()
+        .and_then(|output| {
+            output
+                .trim()
+                .lines()
+                .next()
+                .filter(|l| !l.is_empty())
+                .map(|l| l.to_string())
+        })
+}
+
 /// Get the full process table once and return it for reuse across panes.
 pub fn get_process_table() -> String {
     Command::new("ps")

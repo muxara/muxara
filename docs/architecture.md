@@ -54,7 +54,8 @@ The frontend is a React SPA bundled by Vite and rendered inside the Tauri webvie
 ### Components
 
 - **`SessionGrid`** — renders a responsive CSS grid (`1 / 2 / 3` columns at sm/lg breakpoints) of `SessionCard` components. Handles three non-data states: loading (shown during first fetch), error (shown when the backend call fails), and empty (no sessions exist). NeedsInput sessions appear first (sorting is handled by the backend).
-- **`SessionCard`** — two-zone card layout:
+- **`SessionCard`** — two-zone card layout, clickable to focus the session:
+  - **Click handler**: calls `invoke("focus_session", { sessionId })` to open a Terminal.app window attached to the tmux session. Brief scale-down + brightness animation on click.
   - **Orientation zone** (top): status dot (`StatusBadge`), session title, abbreviated working directory, state label + recency (e.g. "Working · 2m ago"). NeedsInput cards additionally show the input type (Permission / Question).
   - **Context zone** (bottom, separated by a subtle divider): last terminal output lines in monospace.
   - State styling (left border color, background tint) is driven by a `stateConfig` record keyed by `SessionState`.
@@ -117,7 +118,9 @@ Frontend-facing types serialized via serde:
 
 ### `commands.rs` — Tauri commands
 
-`get_sessions()` is the single Tauri command, called by the frontend every 2 seconds:
+`focus_session(session_id)` opens a new iTerm2 window attached to the tmux session. It extracts the session name from the pane target ID, verifies the session exists, then uses AppleScript (`osascript`) to launch iTerm2 with `tmux attach -t <session>`. Returns an error string if the session is not found or the terminal fails to open.
+
+`get_sessions()` is called by the frontend every 2 seconds:
 1. Check if tmux is alive; start server if needed
 2. List all panes
 3. Fetch process table once (`ps -ax`), check each pane for a running `claude` process

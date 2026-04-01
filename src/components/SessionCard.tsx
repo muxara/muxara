@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import type { Session, SessionState } from "../types";
 import { StatusBadge } from "./StatusBadge";
 
@@ -61,10 +63,25 @@ function stateLabel(session: Session): string {
 
 export function SessionCard({ session }: { session: Session }) {
   const config = stateConfig[session.state];
+  const [clicking, setClicking] = useState(false);
+
+  async function handleClick() {
+    setClicking(true);
+    try {
+      await invoke("focus_session", { sessionId: session.id });
+    } catch (err) {
+      console.error("Failed to focus session:", err);
+    } finally {
+      setTimeout(() => setClicking(false), 300);
+    }
+  }
 
   return (
     <div
-      className={`flex flex-col rounded-lg border-l-4 ${config.border} ${config.bg} shadow-md`}
+      onClick={handleClick}
+      className={`flex flex-col rounded-lg border-l-4 cursor-pointer transition-all duration-150 ${
+        clicking ? "scale-[0.97] brightness-125" : "hover:brightness-110"
+      } ${config.border} ${config.bg} shadow-md`}
     >
       {/* ── Orientation zone ── */}
       <div className="px-3 pt-3 pb-2">
