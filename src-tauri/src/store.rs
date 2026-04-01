@@ -6,7 +6,7 @@ use crate::session::{NeedsInputType, RuntimeState, Session, SessionState};
 use crate::tmux::classifier::{self, ClassifierInput};
 use crate::tmux::client::{CapturedPane, TmuxPaneInfo};
 
-const LAST_OUTPUT_TAIL_LINES: usize = 10;
+const LAST_OUTPUT_TAIL_LINES: usize = 20;
 
 fn state_priority(state: &SessionState) -> u8 {
     match state {
@@ -201,7 +201,7 @@ impl SessionStore {
         sessions.sort_by(|a, b| {
             state_priority(&a.state)
                 .cmp(&state_priority(&b.state))
-                .then_with(|| a.name.cmp(&b.name))
+                .then_with(|| b.last_changed_at.cmp(&a.last_changed_at))
         });
 
         sessions

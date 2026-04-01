@@ -3,7 +3,7 @@ import { SessionGrid } from "./components/SessionGrid";
 import { NewSessionButton } from "./components/NewSessionButton";
 
 function App() {
-  const { sessions, loading, error } = useSessions();
+  const { sessions, loading, error, onScrollActivity } = useSessions();
 
   return (
     <div className="h-screen bg-gray-950 text-gray-100 p-4 flex flex-col overflow-hidden">
@@ -12,7 +12,7 @@ function App() {
         <NewSessionButton />
       </div>
       <div className="flex-1 overflow-y-auto pb-2">
-        <SessionGrid sessions={sessions} loading={loading} error={error} />
+        <SessionGrid sessions={sessions} loading={loading} error={error} onScrollActivity={onScrollActivity} />
       </div>
     </div>
   );

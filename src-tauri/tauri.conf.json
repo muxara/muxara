@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "Muxara",
-        "width": 900,
-        "height": 600,
+        "width": 1100,
+        "height": 900,
         "minWidth": 480,
         "minHeight": 360,
         "resizable": true

@@ -61,7 +61,7 @@ function stateLabel(session: Session): string {
   return config.label;
 }
 
-export function SessionCard({ session }: { session: Session }) {
+export function SessionCard({ session, onScrollActivity }: { session: Session; onScrollActivity: () => void }) {
   const config = stateConfig[session.state];
   const [clicking, setClicking] = useState(false);
 
@@ -105,8 +105,10 @@ export function SessionCard({ session }: { session: Session }) {
       </div>
 
       {/* ── Context zone ── */}
-      {session.lastOutputLines.length > 0 && (
-        <div className="border-t border-gray-700/50 px-3 py-2 mt-auto">
+      {session.lastOutputLines.length > 0 &&
+        session.state !== "idle" &&
+        session.state !== "unknown" && (
+        <div className="border-t border-gray-700/50 px-3 py-2 mt-auto max-h-48 overflow-y-auto" onScroll={onScrollActivity}>
           {session.lastOutputLines.map((line, i) => (
             <p
               key={i}

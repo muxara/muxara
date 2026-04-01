@@ -9,8 +9,8 @@ const CLASSIFY_TAIL_LINES: usize = 50;
 /// How recently output must have changed (in seconds) to be considered "working".
 const WORKING_THRESHOLD_SECS: f64 = 5.0;
 
-/// Consecutive idle polls required before transitioning from Working → Idle.
-pub const WORKING_IDLE_DEBOUNCE: u32 = 2;
+/// Minimum seconds of no output change before transitioning from Working → Idle.
+pub const WORKING_IDLE_COOLOFF_SECS: f64 = 300.0;
 
 // ---------------------------------------------------------------------------
 // Regex patterns (compiled once)
@@ -192,9 +192,9 @@ pub fn classify(input: &ClassifierInput) -> ClassifierResult {
     } else if working {
         SessionState::Working
     } else if matches!(input.previous_state, Some(SessionState::Working))
-        && input.consecutive_idle_count < WORKING_IDLE_DEBOUNCE
+        && input.seconds_since_last_change < WORKING_IDLE_COOLOFF_SECS
     {
-        // Debounce: hold Working state until enough consecutive idle readings
+        // Cool-off: hold Working state until output has been unchanged for 5 minutes
         debounce_applied = true;
         SessionState::Working
     } else if is_output_recognizable(full_output) {
@@ -487,31 +487,35 @@ mod tests {
     }
 
     #[test]
-    fn test_classify_debounce_holds_working() {
+    fn test_classify_cooloff_holds_working() {
+        // Output stopped changing 60s ago — still within 5min cool-off
         let input = ClassifierInput {
             normalized_output: "⏺ some output\n❯ ",
             output_hash: "same",
             previous_hash: Some("same"),
             previous_state: Some(&SessionState::Working),
-            seconds_since_last_change: 10.0,
-            consecutive_idle_count: WORKING_IDLE_DEBOUNCE - 1,
+            seconds_since_last_change: 60.0,
+            consecutive_idle_count: 0,
         };
         let result = classify(&input);
         assert!(matches!(result.state, SessionState::Working));
+        assert!(result.debounce_applied);
     }
 
     #[test]
-    fn test_classify_debounce_releases_to_idle() {
+    fn test_classify_cooloff_releases_to_idle() {
+        // Output stopped changing 301s ago — past 5min cool-off
         let input = ClassifierInput {
             normalized_output: "⏺ some output\n❯ ",
             output_hash: "same",
             previous_hash: Some("same"),
             previous_state: Some(&SessionState::Working),
-            seconds_since_last_change: 10.0,
-            consecutive_idle_count: WORKING_IDLE_DEBOUNCE,
+            seconds_since_last_change: 301.0,
+            consecutive_idle_count: 0,
         };
         let result = classify(&input);
         assert!(matches!(result.state, SessionState::Idle));
+        assert!(!result.debounce_applied);
     }
 
     #[test]
