@@ -35,6 +35,8 @@ export interface ClassifierInput {
   lastChangedAt: Date | null;
   now: Date;
   paneTitle: string | null;
+  /** How many consecutive polls have returned Idle while previousState is Working */
+  consecutiveIdleCount: number;
 }
 
 export interface ClassifierResult {
@@ -51,3 +53,6 @@ export const CAPTURE_SCROLLBACK_LINES = 200;
 
 /** Number of bottom lines to focus classification on */
 export const CLASSIFY_TAIL_LINES = 50;
+
+/** Consecutive idle polls required before transitioning from Working → Idle */
+export const WORKING_IDLE_DEBOUNCE = 2;

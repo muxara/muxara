@@ -7,6 +7,7 @@ import {
   SessionState,
   NeedsInputType,
   WORKING_THRESHOLD_MS,
+  WORKING_IDLE_DEBOUNCE,
   type ClassifierInput,
 } from "./types.js";
 
@@ -35,6 +36,7 @@ function makeInput(
     lastChangedAt: null,
     now: new Date(),
     paneTitle: null,
+    consecutiveIdleCount: 0,
     ...overrides,
   };
 }
@@ -187,22 +189,42 @@ describe("classifier: multi-frame temporal logic", () => {
     expect(result.state).toBe(SessionState.Working);
   });
 
-  it("Working → Idle transition when output stops changing", () => {
+  it("Working → Idle transition when output stops changing (after debounce)", () => {
     const files = strippedFiles("working");
     const output = readFixture(`working/${files[0]}`);
     const hash = hashOutput(output);
     const now = new Date();
 
-    // Previously was working, but now output hasn't changed beyond threshold
+    // Previously was working, output hasn't changed, AND debounce threshold met
     const result = classify(
       makeInput(output, {
         previousHash: hash,
         previousState: SessionState.Working,
         lastChangedAt: new Date(now.getTime() - WORKING_THRESHOLD_MS - 1_000),
         now,
+        consecutiveIdleCount: WORKING_IDLE_DEBOUNCE,
       }),
     );
     expect(result.state).toBe(SessionState.Idle);
+  });
+
+  it("Working holds during debounce window (not yet enough idle polls)", () => {
+    const files = strippedFiles("working");
+    const output = readFixture(`working/${files[0]}`);
+    const hash = hashOutput(output);
+    const now = new Date();
+
+    // Output stopped changing but debounce count not yet met — stay Working
+    const result = classify(
+      makeInput(output, {
+        previousHash: hash,
+        previousState: SessionState.Working,
+        lastChangedAt: new Date(now.getTime() - WORKING_THRESHOLD_MS - 1_000),
+        now,
+        consecutiveIdleCount: WORKING_IDLE_DEBOUNCE - 1,
+      }),
+    );
+    expect(result.state).toBe(SessionState.Working);
   });
 
   it("Working → NeedsInput when permission prompt appears", () => {

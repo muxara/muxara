@@ -2,6 +2,7 @@ import {
   SessionState,
   NeedsInputType,
   WORKING_THRESHOLD_MS,
+  WORKING_IDLE_DEBOUNCE,
   CLASSIFY_TAIL_LINES,
   type ClassifierInput,
   type ClassifierResult,
@@ -127,6 +128,12 @@ export function classify(input: ClassifierInput): ClassifierResult {
   } else if (errored) {
     state = SessionState.Errored;
   } else if (working) {
+    state = SessionState.Working;
+  } else if (
+    input.previousState === SessionState.Working &&
+    input.consecutiveIdleCount < WORKING_IDLE_DEBOUNCE
+  ) {
+    // Debounce: hold Working state until we see enough consecutive idle readings
     state = SessionState.Working;
   } else if (isOutputRecognizable(fullOutput)) {
     state = SessionState.Idle;
