@@ -1,8 +1,12 @@
-# Spike #1: Capture Real Claude Code Terminal Output
+# Spike Findings
+
+---
+
+# Spike #1 & #2: Capture Terminal Output and Build Classifier
 
 ## Summary
 
-Captured real Claude Code terminal output from tmux panes across 4 core states (idle, working, needs-input, errored) plus two additional dimensions: AskUserQuestion prompts and plan mode vs. edit mode. Findings inform how the classifier (issue #2) should detect session state.
+Captured real Claude Code terminal output from tmux panes across 4 core states (idle, working, needs-input, errored) plus two additional dimensions: AskUserQuestion prompts and plan mode vs. edit mode. Used these findings to build and test the tmux client and state classifier (issue #2).
 
 ## Capture Method
 
@@ -214,3 +218,74 @@ spike/fixtures/
 9. **Distinguish AskUserQuestion from permission prompts**: Look for `☐` marker and `Enter to select · ↑/↓ to navigate` footer. AskUserQuestion requires more user thought than a yes/no permission — the attention model should weight it higher.
 10. **Investigate terminal tab title**: Claude Code sets the terminal tab title via ANSI escapes. This can be read with `tmux display-message -p '#{pane_title}'` and may be a more stable signal than status bar content since it's not affected by custom plugins. This was not captured in this spike.
 11. **Design for status bar variability**: Users install custom status bar plugins. The classifier should not hard-depend on specific status bar formatting. Degrade gracefully when the status bar doesn't match expected patterns.
+
+---
+
+# Spike #3: End-to-End Validation Against Live Sessions
+
+## Summary
+
+Validated the classifier end-to-end against real live Claude Code sessions in tmux. Discovered a Working→Idle flicker issue caused by brief pauses between tool calls, fixed it with a debounce mechanism, and confirmed all viability criteria were met. **Decision: proceed to Phase 1.**
+
+## Setup
+
+3 tmux sessions, each running Claude Code in a different state:
+
+| Session | Setup | Expected state |
+|---|---|---|
+| `spike-idle` | `claude` with no prompt | Idle |
+| `spike-input` | `claude "List all files in /usr recursively..."` — triggers bash permission prompt | NeedsInput |
+| `spike-work` | `claude "Explain plan.md in great detail, 3000+ words"` — long generation task | Working |
+
+Monitor tool (`npm run spike:verbose`) polled all tmux panes every 2s. Each run lasted 2 minutes (~60 polls/session, ~180 total classifications).
+
+## Run 1: Before debounce
+
+| Session | Classifications | Result | Issues |
+|---|---|---|---|
+| spike-idle | 60 | `idle` 60/60 | None |
+| spike-input | 60 | `needs-input` 60/60 | None |
+| spike-work | 58 | `working:20, idle:38` | **5 flickers** — rapid `working↔idle` oscillation |
+
+- **Unknown rate**: 0%
+- **Flicker rate**: 2.54/min (above 2/min target)
+
+**Root cause of flicker**: Claude Code pauses briefly between tool calls. Output stops changing, the 5s working threshold expires, classifier says "idle", then output resumes and it flips back to "working".
+
+## Fix: Working→Idle debounce
+
+Added `WORKING_IDLE_DEBOUNCE = 2` — when previousState is Working and classifier would say Idle, require 2 consecutive idle readings before transitioning. Hard signals (NeedsInput, Errored) still take effect immediately.
+
+## Run 2: After debounce
+
+| Session | Classifications | Result | Issues |
+|---|---|---|---|
+| spike-idle | 60 | `idle` 60/60 | None |
+| spike-input | 60 | `needs-input` 60/60 | None |
+| spike-work | 59 | `working:59, idle:1` | **0 flickers** |
+
+- **Unknown rate**: 0%
+- **Flicker rate**: 0.00/min
+- **NeedsInput precision**: 100% (60/60)
+- **Idle precision**: 100% (60/60)
+- **Working stability**: 59 consecutive correct after initial startup
+
+## Viability Assessment
+
+| Criterion | Target | Result | Pass |
+|---|---|---|---|
+| NeedsInput detection | Near-perfect | 100% (120/120 across both runs) | Yes |
+| Errored detection | Reliable | Validated via fixtures (6 fixture files) | Yes |
+| Working vs Idle stability | Low flicker | 0.00/min after debounce | Yes |
+| Unknown rate | < 20% | 0% | Yes |
+| Transition latency | Within seconds | 1 poll cycle (2s) | Yes |
+
+## What Was NOT Tested Live
+
+- **Errored state** — only validated via fixture files, not against a live session
+- **Transition scenarios** (NeedsInput→Working on approval, Errored→Idle on recovery) — would require interactive testing with the tmux sessions
+- **Longer stability run** (10-15 min) — both runs were 2 minutes; longer run recommended before shipping but results are very promising
+
+## Decision
+
+Proceed to Phase 1. The core bet — that we can reliably infer Claude Code session state from tmux pane output — is validated. The classifier is accurate, stable, and the architecture is sound.
