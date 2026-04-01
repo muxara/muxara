@@ -22,7 +22,8 @@ muxara/
 │   │   └── useSessions.ts       Polling hook — calls get_sessions every 1.5s, returns sessions/loading/error
 │   └── components/
 │       ├── SessionGrid.tsx      Grid layout for session cards, handles loading/error/empty states
-│       └── SessionCard.tsx      Individual card — displays state, name, working dir, output tail
+│       ├── SessionCard.tsx      Two-zone card: orientation (status, title, dir, recency) + context (output)
+│       └── StatusBadge.tsx      Colored status dot per session state
 ├── src-tauri/                   Backend (Rust)
 │   ├── src/
 │   │   ├── main.rs              Entry point, delegates to lib.rs
@@ -52,8 +53,12 @@ The frontend is a React SPA bundled by Vite and rendered inside the Tauri webvie
 
 ### Components
 
-- **`SessionGrid`** — renders a responsive CSS grid of `SessionCard` components. Handles three non-data states: loading (shown during first fetch), error (shown when the backend call fails), and empty (no sessions exist).
-- **`SessionCard`** — displays a session's name, state badge (color-coded), working directory, needs-input type, and the last 10 lines of output. State styling (border color, background, badge) is driven by a `stateConfig` record keyed by `SessionState`.
+- **`SessionGrid`** — renders a responsive CSS grid (`1 / 2 / 3` columns at sm/lg breakpoints) of `SessionCard` components. Handles three non-data states: loading (shown during first fetch), error (shown when the backend call fails), and empty (no sessions exist). NeedsInput sessions appear first (sorting is handled by the backend).
+- **`SessionCard`** — two-zone card layout:
+  - **Orientation zone** (top): status dot (`StatusBadge`), session title, abbreviated working directory, state label + recency (e.g. "Working · 2m ago"). NeedsInput cards additionally show the input type (Permission / Question).
+  - **Context zone** (bottom, separated by a subtle divider): last terminal output lines in monospace.
+  - State styling (left border color, background tint) is driven by a `stateConfig` record keyed by `SessionState`.
+- **`StatusBadge`** — colored dot indicating session state. Working state pulses via `animate-pulse`.
 
 ### Types (`src/types.ts`)
 

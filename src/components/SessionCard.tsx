@@ -1,44 +1,62 @@
 import type { Session, SessionState } from "../types";
+import { StatusBadge } from "./StatusBadge";
 
 const stateConfig: Record<
   SessionState,
-  { label: string; border: string; bg: string; badge: string }
+  { label: string; border: string; bg: string }
 > = {
   "needs-input": {
     label: "Needs Input",
     border: "border-l-amber-400",
     bg: "bg-amber-950/40",
-    badge: "bg-amber-400/20 text-amber-300",
   },
   working: {
     label: "Working",
     border: "border-l-blue-400",
     bg: "bg-blue-950/30",
-    badge: "bg-blue-400/20 text-blue-300",
   },
   idle: {
     label: "Idle",
     border: "border-l-gray-600",
     bg: "bg-gray-800/50",
-    badge: "bg-gray-600/20 text-gray-400",
   },
   errored: {
     label: "Errored",
     border: "border-l-red-400",
     bg: "bg-red-950/30",
-    badge: "bg-red-400/20 text-red-300",
   },
   unknown: {
     label: "Unknown",
     border: "border-l-gray-500 border-dashed",
     bg: "bg-gray-800/30",
-    badge: "bg-gray-500/20 text-gray-500",
   },
 };
 
-function dirLabel(path: string): string {
+function dirBasename(path: string): string {
   const parts = path.split("/").filter(Boolean);
   return parts.length > 0 ? parts[parts.length - 1] : path;
+}
+
+function timeAgo(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  if (diffMs < 0) return "just now";
+  const seconds = Math.floor(diffMs / 1000);
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+function stateLabel(session: Session): string {
+  const config = stateConfig[session.state];
+  if (session.state === "needs-input" && session.needsInputType) {
+    const sub =
+      session.needsInputType === "permission" ? "Permission" : "Question";
+    return `${config.label} · ${sub}`;
+  }
+  return config.label;
 }
 
 export function SessionCard({ session }: { session: Session }) {
@@ -46,33 +64,38 @@ export function SessionCard({ session }: { session: Session }) {
 
   return (
     <div
-      className={`rounded-lg border-l-4 ${config.border} ${config.bg} p-4 shadow-md`}
+      className={`flex flex-col rounded-lg border-l-4 ${config.border} ${config.bg} shadow-md`}
     >
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <h3 className="font-semibold text-gray-100 truncate">{session.name}</h3>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs font-medium ${config.badge}`}
-          >
-            {config.label}
-          </span>
-          {session.state === "needs-input" && session.needsInputType && (
-            <span className="rounded px-1.5 py-0.5 text-[9px] text-amber-300/60 uppercase tracking-wide">
-              {session.needsInputType === "permission" ? "Permission" : "Question"}
-            </span>
-          )}
+      {/* ── Orientation zone ── */}
+      <div className="px-3 pt-3 pb-2">
+        <div className="flex items-center gap-2 mb-1">
+          <StatusBadge state={session.state} />
+          <h3 className="font-semibold text-sm text-gray-100 truncate">
+            {session.name}
+          </h3>
         </div>
+        <p
+          className="text-xs text-gray-400 truncate mb-1"
+          title={session.workingDirectory}
+        >
+          {session.workingDirectory.startsWith("/")
+            ? `~/${session.workingDirectory.split("/").slice(-2).join("/")}`
+            : dirBasename(session.workingDirectory)}
+        </p>
+        <p className="text-[11px] text-gray-500">
+          {stateLabel(session)} · {timeAgo(session.lastChangedAt)}
+        </p>
       </div>
 
-      <p className="text-xs text-gray-400 mb-2 truncate" title={session.workingDirectory}>
-        {dirLabel(session.workingDirectory)}
-      </p>
-
+      {/* ── Context zone ── */}
       {session.lastOutputLines.length > 0 && (
-        <div className="mt-auto rounded bg-gray-900/60 px-2 py-1.5">
+        <div className="border-t border-gray-700/50 px-3 py-2 mt-auto">
           {session.lastOutputLines.map((line, i) => (
-            <p key={i} className="text-xs font-mono text-gray-300 truncate">
-              {line}
+            <p
+              key={i}
+              className="text-[11px] leading-4 font-mono text-gray-400 truncate"
+            >
+              {line || "\u00A0"}
             </p>
           ))}
         </div>
