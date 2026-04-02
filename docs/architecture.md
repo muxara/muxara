@@ -40,6 +40,7 @@ muxara/
 │   │   ├── preferences.rs       User preferences — struct, validation, JSON persistence
 │   │   ├── session.rs           Frontend-facing data model (Session, SessionState, RuntimeState)
 │   │   ├── store.rs             In-memory session store with reconciliation logic
+│   │   ├── git.rs               Git helpers: repo detection, branch detection, worktree detection
 │   │   └── tmux/
 │   │       ├── mod.rs           Module declaration
 │   │       ├── classifier.rs    State classification: regex-based pattern matching on pane output
@@ -129,7 +130,7 @@ Frontend-facing types serialized via serde:
 
 ### `commands.rs` — Tauri commands
 
-`create_session(name, working_dir, command)` creates a new tmux session and starts Claude Code in it. Requires a non-empty `working_dir`. Ensures the tmux server is running, checks for duplicate session names (returns an error if one exists), creates the session with `tmux new-session -d -s <name> -c <dir>`, then sends the bootstrap command via `tmux send-keys`. The command parameter defaults to `"claude"` if empty. The session auto-appears in the dashboard on the next poll cycle.
+`create_session(name, working_dir, command)` creates a new tmux session and starts Claude Code in it. Requires a non-empty `working_dir`. Ensures the tmux server is running, checks for duplicate session names (returns an error if one exists), creates the session with `tmux new-session -d -s <name> -c <dir>`, then sends the bootstrap command via `tmux send-keys`. The command parameter defaults to `"claude"` if empty. When the `use_worktree` preference is enabled (default: true) and the working directory is a git repo, the command is automatically augmented with `-w <session-name>` to create an isolated git worktree via Claude Code's built-in worktree support. The session auto-appears in the dashboard on the next poll cycle.
 
 `resolve_bootstrap_command(working_dir)` returns the effective bootstrap command for a given working directory by checking project overrides first, then falling back to the global default.
 
@@ -139,6 +140,8 @@ Frontend-facing types serialized via serde:
 
 `rename_session(session_id, new_name)` renames a tmux session. Validates that the new name is non-empty and not a duplicate, calls `tmux rename-session -t <old> <new>`, and updates the in-memory store (session name, display name, and pane target key) so the UI reflects the change immediately.
 
+`is_git_repo(path)` checks if a path is inside a git repository. Used by the frontend (future) and internally by `create_session`.
+
 `get_sessions()` is called by the frontend every 2 seconds:
 1. Check if tmux is alive; start server if needed
 2. List all panes
@@ -146,6 +149,19 @@ Frontend-facing types serialized via serde:
 4. Capture pane output for each pane
 5. Reconcile with the session store
 6. Return frontend-ready sessions
+
+### `git.rs` — git helpers
+
+Lightweight helpers for git repository detection, branch detection, and worktree detection. Shells out to `git` via `std::process::Command`, matching the pattern used in `tmux/client.rs`.
+
+**Key functions:**
+- `is_git_repo(path)` — runs `git -C <path> rev-parse --is-inside-work-tree` to check if a path is inside a git repository
+- `detect_branch(path)` — runs `git -C <path> rev-parse --abbrev-ref HEAD` to get the current branch name. Returns `None` for non-git dirs or detached HEAD state
+- `is_worktree(path)` — checks if `<path>/.git` is a file (not a directory), which indicates a git worktree rather than a main checkout
+
+**Usage:**
+- `create_session` uses `is_git_repo()` to decide whether to append `-w <name>` to the bootstrap command
+- `SessionStore::reconcile()` uses `detect_branch()` and `is_worktree()` to enrich session data with git metadata, cached per working directory change
 
 ## Data Flow
 
@@ -235,6 +251,7 @@ The `Preferences` struct holds all user-configurable settings, serialized to/fro
 | Setting | Field | Default | Range | Project-compatible |
 |---|---|---|---|---|
 | Bootstrap command | `bootstrap_command` | `"claude"` | non-empty, max 500 chars | Yes |
+| Use git worktrees | `use_worktree` | true | — | Yes |
 | Working→Idle cool-off | `cooloff_minutes` | 5.0 | 0–60 min | No |
 | Poll interval | `poll_interval_secs` | 1.5 | 0.5–30 s | No |
 | Output lines per card | `output_lines` | 20 | 1–200 | No |

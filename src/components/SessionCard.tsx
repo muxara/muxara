@@ -177,6 +177,14 @@ export function SessionCard({ session, onScrollActivity, focused, onFocus }: { s
             ? `~/${session.workingDirectory.split("/").slice(-2).join("/")}`
             : dirBasename(session.workingDirectory)}
         </p>
+        {session.gitBranch && (
+          <p className="text-[11px] text-gray-500 truncate mb-1">
+            <span className="text-gray-600">branch:</span> {session.gitBranch}
+            {session.isWorktree && (
+              <span className="ml-1.5 text-[10px] text-violet-400/70 font-medium">WT</span>
+            )}
+          </p>
+        )}
         <p className="text-[11px] text-gray-500">
           {stateLabel(session)} · {timeAgo(session.lastChangedAt)}
         </p>

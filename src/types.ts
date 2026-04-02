@@ -1,5 +1,6 @@
 export interface ProjectOverrides {
   bootstrapCommand?: string;
+  useWorktree?: boolean;
 }
 
 export interface Preferences {
@@ -11,6 +12,7 @@ export interface Preferences {
   gridColumns: number;
   scrollPauseSecs: number;
   bootstrapCommand: string;
+  useWorktree: boolean;
   projectOverrides: Record<string, ProjectOverrides>;
 }
 
@@ -53,4 +55,6 @@ export interface Session {
   previousState: string | null;
   paneTitle: string | null;
   runtimeState: RuntimeState;
+  gitBranch: string | null;
+  isWorktree: boolean | null;
 }

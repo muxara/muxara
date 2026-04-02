@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use chrono::{DateTime, Utc};
 
+use crate::git;
 use crate::session::{NeedsInputType, RuntimeState, Session, SessionState};
 use crate::tmux::classifier::{self, ClassifierInput};
 use crate::tmux::client::{CapturedPane, TmuxPaneInfo};
@@ -39,6 +40,9 @@ pub struct TrackedSession {
     pub is_in_plan_mode: Option<bool>,
     pub previous_state: Option<SessionState>,
     pub consecutive_idle_count: u32,
+    pub git_branch: Option<String>,
+    pub is_worktree: Option<bool>,
+    pub last_git_checked_dir: Option<String>,
 }
 
 pub struct SessionStore {
@@ -88,6 +92,9 @@ impl SessionStore {
                     is_in_plan_mode: None,
                     previous_state: None,
                     consecutive_idle_count: 0,
+                    git_branch: None,
+                    is_worktree: None,
+                    last_git_checked_dir: None,
                 }
             });
 
@@ -95,6 +102,18 @@ impl SessionStore {
             session.pane_pid = pane.pane_pid;
             session.working_directory = pane.current_path.clone();
             session.last_seen_at = now;
+
+            // Refresh git info only when working directory changes
+            let dir_changed = session
+                .last_git_checked_dir
+                .as_ref()
+                .map(|d| d != &pane.current_path)
+                .unwrap_or(true);
+            if dir_changed {
+                session.git_branch = git::detect_branch(&pane.current_path);
+                session.is_worktree = Some(git::is_worktree(&pane.current_path));
+                session.last_git_checked_dir = Some(pane.current_path.clone());
+            }
 
             if let Some(alive) = claude_status.get(&target) {
                 session.claude_alive = *alive;
@@ -219,6 +238,8 @@ impl SessionStore {
                     tmux_alive: tracked.tmux_alive,
                     claude_alive: tracked.claude_alive,
                 },
+                git_branch: tracked.git_branch.clone(),
+                is_worktree: tracked.is_worktree,
             })
             .collect();
 

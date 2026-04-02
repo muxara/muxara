@@ -184,11 +184,11 @@ function ProjectsView({
   function handleOverrideChange(
     path: string,
     key: string,
-    value: string,
+    value: string | boolean | undefined,
   ) {
     const current = projectOverrides[path] || {};
     const next = { ...current };
-    if (value === "") {
+    if (value === "" || value === undefined) {
       delete (next as Record<string, unknown>)[key];
     } else {
       (next as Record<string, unknown>)[key] = value;
@@ -236,9 +236,7 @@ function ProjectsView({
               {projectCompatibleSettings.map((def) => {
                 const overrideKey = def.key as string;
                 const overrideValue =
-                  (overrides as Record<string, unknown>)[overrideKey] as
-                    | string
-                    | undefined;
+                  (overrides as Record<string, unknown>)[overrideKey];
                 const globalValue = String(
                   globalPrefs[def.key as keyof Preferences],
                 );
@@ -255,13 +253,32 @@ function ProjectsView({
                         </div>
                       </div>
                       <div className="shrink-0">
-                        <TextField
-                          value={overrideValue ?? ""}
-                          placeholder={globalValue}
-                          onChange={(v) =>
-                            handleOverrideChange(path, overrideKey, v)
-                          }
-                        />
+                        {def.type === "boolean" ? (
+                          <select
+                            value={overrideValue === undefined ? "" : String(overrideValue)}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              handleOverrideChange(
+                                path,
+                                overrideKey,
+                                v === "" ? undefined : v === "true",
+                              );
+                            }}
+                            className="w-32 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm text-gray-200 focus:outline-none focus:border-blue-500"
+                          >
+                            <option value="">Inherit ({globalValue})</option>
+                            <option value="true">On</option>
+                            <option value="false">Off</option>
+                          </select>
+                        ) : (
+                          <TextField
+                            value={(overrideValue as string) ?? ""}
+                            placeholder={globalValue}
+                            onChange={(v) =>
+                              handleOverrideChange(path, overrideKey, v)
+                            }
+                          />
+                        )}
                       </div>
                     </div>
                   </div>

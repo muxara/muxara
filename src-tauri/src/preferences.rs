@@ -13,6 +13,8 @@ pub struct ConfigDir(pub std::path::PathBuf);
 pub struct ProjectOverrides {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bootstrap_command: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub use_worktree: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -26,8 +28,14 @@ pub struct Preferences {
     pub grid_columns: u32,
     pub scroll_pause_secs: f64,
     pub bootstrap_command: String,
+    #[serde(default = "default_true")]
+    pub use_worktree: bool,
     #[serde(default)]
     pub project_overrides: HashMap<String, ProjectOverrides>,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 impl Default for Preferences {
@@ -41,6 +49,7 @@ impl Default for Preferences {
             grid_columns: 2,
             scroll_pause_secs: 5.0,
             bootstrap_command: "claude".to_string(),
+            use_worktree: true,
             project_overrides: HashMap::new(),
         }
     }
@@ -92,6 +101,13 @@ impl Preferences {
             }
         }
         Ok(())
+    }
+
+    pub fn effective_use_worktree(&self, working_dir: &str) -> bool {
+        self.project_overrides
+            .get(working_dir)
+            .and_then(|o| o.use_worktree)
+            .unwrap_or(self.use_worktree)
     }
 
     pub fn effective_bootstrap_command(&self, working_dir: &str) -> &str {
@@ -194,6 +210,7 @@ mod tests {
             "/some/path".to_string(),
             ProjectOverrides {
                 bootstrap_command: Some("".to_string()),
+                ..Default::default()
             },
         );
         assert!(prefs.validate().is_err());
@@ -206,6 +223,7 @@ mod tests {
             "  ".to_string(),
             ProjectOverrides {
                 bootstrap_command: Some("claude".to_string()),
+                ..Default::default()
             },
         );
         assert!(prefs.validate().is_err());
@@ -233,6 +251,7 @@ mod tests {
             "/projects/matrix".to_string(),
             ProjectOverrides {
                 bootstrap_command: Some("claude --plugin ../morpheus".to_string()),
+                ..Default::default()
             },
         );
         assert_eq!(
@@ -255,6 +274,7 @@ mod tests {
             "/projects/matrix".to_string(),
             ProjectOverrides {
                 bootstrap_command: None,
+                ..Default::default()
             },
         );
         assert_eq!(
@@ -290,6 +310,7 @@ mod tests {
             "/projects/matrix".to_string(),
             ProjectOverrides {
                 bootstrap_command: Some("claude --plugin ../morpheus".to_string()),
+                ..Default::default()
             },
         );
         prefs.save(&dir).unwrap();
@@ -306,6 +327,55 @@ mod tests {
         let _ = fs::remove_dir_all(&dir);
         let loaded = Preferences::load(&dir);
         assert_eq!(loaded, Preferences::default());
+    }
+
+    #[test]
+    fn test_default_use_worktree_is_true() {
+        let prefs = Preferences::default();
+        assert!(prefs.use_worktree);
+    }
+
+    #[test]
+    fn test_effective_use_worktree_global() {
+        let prefs = Preferences::default();
+        assert!(prefs.effective_use_worktree("/some/dir"));
+
+        let prefs = Preferences {
+            use_worktree: false,
+            ..Preferences::default()
+        };
+        assert!(!prefs.effective_use_worktree("/some/dir"));
+    }
+
+    #[test]
+    fn test_effective_use_worktree_project_override() {
+        let mut prefs = Preferences::default();
+        prefs.project_overrides.insert(
+            "/projects/legacy".to_string(),
+            ProjectOverrides {
+                use_worktree: Some(false),
+                ..Default::default()
+            },
+        );
+        assert!(!prefs.effective_use_worktree("/projects/legacy"));
+        assert!(prefs.effective_use_worktree("/projects/other"));
+    }
+
+    #[test]
+    fn test_effective_use_worktree_project_inherits_global() {
+        let mut prefs = Preferences {
+            use_worktree: false,
+            ..Preferences::default()
+        };
+        prefs.project_overrides.insert(
+            "/projects/matrix".to_string(),
+            ProjectOverrides {
+                bootstrap_command: Some("claude --plugin ../morpheus".to_string()),
+                ..Default::default()
+            },
+        );
+        // No use_worktree override, so inherits global false
+        assert!(!prefs.effective_use_worktree("/projects/matrix"));
     }
 
     #[test]

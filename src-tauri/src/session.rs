@@ -40,4 +40,6 @@ pub struct Session {
     pub previous_state: Option<String>,
     pub pane_title: Option<String>,
     pub runtime_state: RuntimeState,
+    pub git_branch: Option<String>,
+    pub is_worktree: Option<bool>,
 }

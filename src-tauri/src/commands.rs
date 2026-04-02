@@ -4,6 +4,7 @@ use std::sync::Mutex;
 
 use tauri::State;
 
+use crate::git;
 use crate::preferences::{ConfigDir, Preferences};
 use crate::session::Session;
 use crate::store::SessionStore;
@@ -99,12 +100,34 @@ end tell"#,
 }
 
 #[tauri::command]
-pub fn create_session(name: String, working_dir: String, command: String) -> Result<(), String> {
+pub fn create_session(
+    name: String,
+    working_dir: String,
+    command: String,
+    prefs: State<'_, Mutex<Preferences>>,
+) -> Result<(), String> {
     if working_dir.is_empty() {
         return Err("Working directory is required".to_string());
     }
-    let cmd = if command.trim().is_empty() { "claude" } else { command.trim() };
-    client::create_session(&name, &working_dir, cmd).map_err(|e| e.to_string())
+    let base_cmd = if command.trim().is_empty() { "claude" } else { command.trim() };
+
+    let use_worktree = {
+        let p = prefs.lock().unwrap();
+        p.effective_use_worktree(&working_dir)
+    };
+
+    let final_cmd = if use_worktree && git::is_git_repo(&working_dir) {
+        format!("{} -w {}", base_cmd, &name)
+    } else {
+        base_cmd.to_string()
+    };
+
+    client::create_session(&name, &working_dir, &final_cmd).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn is_git_repo(path: String) -> bool {
+    git::is_git_repo(&path)
 }
 
 #[tauri::command]

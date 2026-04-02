@@ -9,6 +9,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   gridColumns: 2,
   scrollPauseSecs: 5,
   bootstrapCommand: "claude",
+  useWorktree: true,
   projectOverrides: {},
 };
 
@@ -24,6 +25,17 @@ export const SETTINGS_SCHEMA: SettingDefinition[] = [
     category: "Sessions",
     type: "text",
     default: "claude",
+    projectCompatible: true,
+  },
+
+  {
+    key: "useWorktree",
+    label: "Use Git Worktrees",
+    description:
+      "Automatically create an isolated git worktree for each new session. Only applies to git repositories.",
+    category: "Sessions",
+    type: "boolean",
+    default: true,
     projectCompatible: true,
   },
 
