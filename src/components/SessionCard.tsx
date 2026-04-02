@@ -138,10 +138,10 @@ export function SessionCard({ session, onScrollActivity, focused, onFocus }: { s
       <div
         onClick={handleClick}
         onContextMenu={handleContextMenu}
-        className={`flex flex-col rounded-lg border-l-4 cursor-pointer transition-all duration-150 ${
+        className={`flex flex-col rounded-lg cursor-pointer transition-all duration-150 ${
           clicking ? "scale-[0.97] brightness-125" : "hover:brightness-110"
         } ${config.border} ${config.bg} ${
-          focused ? "ring-1 ring-emerald-400/40 shadow-[0_4px_16px_rgba(0,0,0,0.4),0_0_20px_rgba(52,211,153,0.2)] -translate-y-1 scale-[1.02] brightness-[1.15]" : "shadow-md"
+          focused ? "border-l-[6px] ring-1 ring-emerald-400/40 shadow-[0_4px_16px_rgba(0,0,0,0.4),0_0_20px_rgba(52,211,153,0.2)] -translate-y-1 scale-[1.02] brightness-[1.15]" : "border-l-2 shadow-md"
         }`}
       >
         {/* ── Orientation zone ── */}
