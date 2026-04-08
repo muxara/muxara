@@ -14,9 +14,12 @@ fn state_priority(state: &SessionState) -> u8 {
     match state {
         SessionState::NeedsInput => 0,
         SessionState::Errored => 1,
+        // Working, Idle, Unknown share the same priority so they
+        // fall through to the stable tie-breaker (session name)
+        // instead of shuffling on every poll cycle.
         SessionState::Working => 2,
-        SessionState::Idle => 3,
-        SessionState::Unknown => 4,
+        SessionState::Idle => 2,
+        SessionState::Unknown => 2,
     }
 }
 
@@ -250,7 +253,7 @@ impl SessionStore {
         sessions.sort_by(|a, b| {
             state_priority(&a.state)
                 .cmp(&state_priority(&b.state))
-                .then_with(|| b.last_changed_at.cmp(&a.last_changed_at))
+                .then_with(|| a.name.cmp(&b.name))
         });
 
         sessions
