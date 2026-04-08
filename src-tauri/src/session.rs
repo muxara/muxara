@@ -33,6 +33,7 @@ pub struct Session {
     pub needs_input_type: Option<NeedsInputType>,
     pub is_in_plan_mode: Option<bool>,
     pub last_output_lines: Vec<String>,
+    pub last_output_lines_ansi: Vec<String>,
     pub working_directory: String,
     pub last_changed_at: String,
     pub last_seen_at: String,

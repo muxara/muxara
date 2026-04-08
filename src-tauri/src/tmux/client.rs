@@ -5,8 +5,14 @@ use std::fmt;
 use std::process::Command;
 use std::sync::LazyLock;
 
+// Strips ALL ANSI sequences (CSI, OSC) — used for hashing and classification
 static ANSI_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"\x1b\[[0-9;]*[a-zA-Z]|\x1b\].*?(\x07|\x1b\\)").unwrap()
+});
+
+// Strips only non-visual ANSI sequences (cursor movement, OSC) — preserves SGR color/style codes
+static ANSI_CONTROL_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"\x1b\[[0-9;]*[A-HJKSTfhilnsu]|\x1b\].*?(\x07|\x1b\\)").unwrap()
 });
 
 const CAPTURE_SCROLLBACK_LINES: u32 = 200;
@@ -71,6 +77,7 @@ impl TmuxPaneInfo {
 pub struct CapturedPane {
     pub target: String,
     pub normalized_output: String,
+    pub raw_output: String,
     pub output_hash: String,
     pub pane_title: Option<String>,
 }
@@ -116,6 +123,11 @@ fn run_tmux(args: &[&str]) -> Result<String, TmuxError> {
 
 pub fn strip_ansi(input: &str) -> String {
     ANSI_RE.replace_all(input, "").to_string()
+}
+
+/// Strip only cursor/control ANSI sequences, preserving SGR color codes (e.g. \x1b[31m).
+pub fn strip_ansi_controls(input: &str) -> String {
+    ANSI_CONTROL_RE.replace_all(input, "").to_string()
 }
 
 pub fn hash_output(normalized: &str) -> String {
@@ -259,7 +271,10 @@ pub fn list_panes(session_name: Option<&str>) -> Result<Vec<TmuxPaneInfo>, TmuxE
 
 pub fn capture_pane(target: &str) -> Result<CapturedPane, TmuxError> {
     let scrollback = format!("-{}", CAPTURE_SCROLLBACK_LINES);
+    // Plain capture (no ANSI) for hashing and classification
     let raw_output = run_tmux(&["capture-pane", "-p", "-S", &scrollback, "-t", target])?;
+    // Capture with -e to preserve ANSI escape sequences for colored display
+    let ansi_output = run_tmux(&["capture-pane", "-p", "-e", "-S", &scrollback, "-t", target])?;
 
     let pane_title = run_tmux(&["display-message", "-p", "-t", target, "#{pane_title}"])
         .ok()
@@ -267,11 +282,13 @@ pub fn capture_pane(target: &str) -> Result<CapturedPane, TmuxError> {
         .filter(|s| !s.is_empty());
 
     let normalized = strip_ansi(&raw_output).trim_end().to_string();
+    let colored = strip_ansi_controls(&ansi_output).trim_end().to_string();
     let output_hash = hash_output(&normalized);
 
     Ok(CapturedPane {
         target: target.to_string(),
         normalized_output: normalized,
+        raw_output: colored,
         output_hash,
         pane_title,
     })

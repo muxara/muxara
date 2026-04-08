@@ -32,6 +32,7 @@ pub struct TrackedSession {
     pub pane_title: Option<String>,
     pub last_output_hash: Option<String>,
     pub last_output_lines: Vec<String>,
+    pub last_output_lines_ansi: Vec<String>,
     pub last_changed_at: DateTime<Utc>,
     pub last_seen_at: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
@@ -84,6 +85,7 @@ impl SessionStore {
                     pane_title: None,
                     last_output_hash: None,
                     last_output_lines: vec![],
+                    last_output_lines_ansi: vec![],
                     last_changed_at: now,
                     last_seen_at: now,
                     created_at: now,
@@ -136,6 +138,16 @@ impl SessionStore {
                     session.last_output_hash = Some(captured.output_hash.clone());
                     session.last_output_lines = captured
                         .normalized_output
+                        .lines()
+                        .rev()
+                        .take(output_tail_lines)
+                        .map(|l| l.to_string())
+                        .collect::<Vec<_>>()
+                        .into_iter()
+                        .rev()
+                        .collect();
+                    session.last_output_lines_ansi = captured
+                        .raw_output
                         .lines()
                         .rev()
                         .take(output_tail_lines)
@@ -235,6 +247,7 @@ impl SessionStore {
                 needs_input_type: tracked.needs_input_type.clone(),
                 is_in_plan_mode: tracked.is_in_plan_mode,
                 last_output_lines: tracked.last_output_lines.clone(),
+                last_output_lines_ansi: tracked.last_output_lines_ansi.clone(),
                 working_directory: tracked.working_directory.clone(),
                 last_changed_at: tracked.last_changed_at.to_rfc3339(),
                 last_seen_at: tracked.last_seen_at.to_rfc3339(),
@@ -283,6 +296,7 @@ mod tests {
         CapturedPane {
             target: target.to_string(),
             normalized_output: output.to_string(),
+            raw_output: output.to_string(),
             output_hash: hash.to_string(),
             pane_title: Some("claude: test".to_string()),
         }

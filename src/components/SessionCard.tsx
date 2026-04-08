@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import Ansi from "ansi-to-react";
 import type { Session, SessionState } from "../types";
 import { StatusBadge } from "./StatusBadge";
 import { usePreferences } from "../hooks/usePreferences";
@@ -197,12 +198,12 @@ export function SessionCard({ session, onScrollActivity, focused, selected, onFo
           (prefs.showIdleOutput || (session.state !== "idle" && session.state !== "unknown")) && (
           <div className="relative border-t border-gray-700/50 mt-auto">
             <div className="px-3 py-2 overflow-y-auto" style={{ maxHeight: prefs.contextZoneMaxHeight }} onScroll={onScrollActivity}>
-              {session.lastOutputLines.map((line, i) => (
+              {(session.lastOutputLinesAnsi ?? session.lastOutputLines).map((line, i) => (
                 <p
                   key={i}
                   className="text-[11px] leading-5 font-mono text-gray-500 truncate"
                 >
-                  {line || "\u00A0"}
+                  {line ? <Ansi>{line}</Ansi> : "\u00A0"}
                 </p>
               ))}
             </div>

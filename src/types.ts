@@ -48,6 +48,7 @@ export interface Session {
   needsInputType: NeedsInputType | null;
   isInPlanMode: boolean | null;
   lastOutputLines: string[];
+  lastOutputLinesAnsi: string[];
   workingDirectory: string;
   lastChangedAt: string;
   lastSeenAt: string;
