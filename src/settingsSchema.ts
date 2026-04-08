@@ -3,7 +3,7 @@ import type { Preferences, SettingDefinition } from "./types";
 export const DEFAULT_PREFERENCES: Preferences = {
   cooloffMinutes: 5,
   pollIntervalSecs: 1.5,
-  outputLines: 20,
+  outputLines: 30,
   showIdleOutput: false,
   contextZoneMaxHeight: 192,
   gridColumns: 2,

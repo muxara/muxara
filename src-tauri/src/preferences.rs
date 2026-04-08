@@ -43,7 +43,7 @@ impl Default for Preferences {
         Self {
             cooloff_minutes: 5.0,
             poll_interval_secs: 1.5,
-            output_lines: 20,
+            output_lines: 30,
             show_idle_output: false,
             context_zone_max_height: 192,
             grid_columns: 2,
@@ -147,7 +147,7 @@ mod tests {
         let prefs = Preferences::default();
         assert_eq!(prefs.cooloff_minutes, 5.0);
         assert_eq!(prefs.poll_interval_secs, 1.5);
-        assert_eq!(prefs.output_lines, 20);
+        assert_eq!(prefs.output_lines, 30);
         assert!(!prefs.show_idle_output);
         assert_eq!(prefs.context_zone_max_height, 192);
         assert_eq!(prefs.grid_columns, 2);
