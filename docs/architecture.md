@@ -11,7 +11,7 @@ This document covers the full architecture of Muxara — a Tauri v2 desktop app 
 
 ## Platform Support
 
-macOS only. The terminal integration layer (`commands.rs: focus_session`) uses AppleScript (`osascript`) to control iTerm2 windows — there is no abstraction for other terminal emulators or platforms. Preferences persist to `~/Library/Application Support/com.muxara.app/` via Tauri's `app_config_dir()`. The tmux and process-detection layers (`tmux/client.rs`) use POSIX commands (`ps -ax`, process tree walking) that would work on Linux but have not been tested there.
+macOS only. The terminal integration layer (`commands.rs: focus_session`) uses AppleScript (`osascript`) to control the user's chosen terminal app (iTerm2 or Terminal.app, configurable via the `terminal_app` preference). Preferences persist to `~/Library/Application Support/com.muxara.app/` via Tauri's `app_config_dir()`. The tmux and process-detection layers (`tmux/client.rs`) use POSIX commands (`ps -ax`, process tree walking) that would work on Linux but have not been tested there.
 
 ## Project Structure
 
@@ -135,7 +135,7 @@ Frontend-facing types serialized via serde:
 
 `resolve_bootstrap_command(working_dir)` returns the effective bootstrap command for a given working directory by checking project overrides first, then falling back to the global default.
 
-`focus_session(session_id)` opens a new iTerm2 window attached to the tmux session. It extracts the session name from the pane target ID, verifies the session exists, then uses AppleScript (`osascript`) to launch iTerm2 with `tmux attach -t <session>`. Returns an error string if the session is not found or the terminal fails to open.
+`focus_session(session_id)` opens the tmux session in the user's chosen terminal app (iTerm2 or Terminal.app, read from the `terminal_app` preference). It extracts the session name from the pane target ID, verifies the session exists, then dispatches to terminal-specific helper functions that use AppleScript (`osascript`). When a tmux client is already attached, it reuses that tab via `tmux switch-client` and focuses the existing terminal tab. Otherwise, it opens a new window/tab with `tmux attach -t <session>`. Returns an error string if the session is not found or the terminal fails to open.
 
 `kill_session(session_id)` kills a tmux session. Extracts the session name from the pane target ID, calls `tmux kill-session -t <name>`, and removes the session from the in-memory store so the UI updates immediately.
 
@@ -253,6 +253,7 @@ The `Preferences` struct holds all user-configurable settings, serialized to/fro
 |---|---|---|---|---|
 | Bootstrap command | `bootstrap_command` | `"claude"` | non-empty, max 500 chars | Yes |
 | Use git worktrees | `use_worktree` | true | — | Yes |
+| Terminal application | `terminal_app` | `"iterm2"` | `"iterm2"` / `"terminal"` | No |
 | Working→Idle cool-off | `cooloff_minutes` | 5.0 | 0–60 min | No |
 | Poll interval | `poll_interval_secs` | 1.5 | 0.5–30 s | No |
 | Output lines per card | `output_lines` | 30 | 1–200 | No |

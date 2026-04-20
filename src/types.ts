@@ -13,6 +13,7 @@ export interface Preferences {
   scrollPauseSecs: number;
   bootstrapCommand: string;
   useWorktree: boolean;
+  terminalApp: string;
   projectOverrides: Record<string, ProjectOverrides>;
 }
 
@@ -28,7 +29,7 @@ export interface SettingDefinition {
   min?: number;
   max?: number;
   step?: number;
-  options?: { value: number; label: string }[];
+  options?: { value: string | number; label: string }[];
   unit?: string;
   projectCompatible?: boolean;
 }

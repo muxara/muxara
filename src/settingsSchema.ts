@@ -10,6 +10,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   scrollPauseSecs: 5,
   bootstrapCommand: "claude",
   useWorktree: true,
+  terminalApp: "iterm2",
   projectOverrides: {},
 };
 
@@ -26,6 +27,20 @@ export const SETTINGS_SCHEMA: SettingDefinition[] = [
     type: "text",
     default: "claude",
     projectCompatible: true,
+  },
+
+  {
+    key: "terminalApp",
+    label: "Terminal Application",
+    description:
+      "Which terminal app to use when opening sessions.",
+    category: "Sessions",
+    type: "select",
+    default: "iterm2",
+    options: [
+      { value: "iterm2", label: "iTerm2" },
+      { value: "terminal", label: "Terminal" },
+    ],
   },
 
   {

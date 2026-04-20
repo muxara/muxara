@@ -30,12 +30,18 @@ pub struct Preferences {
     pub bootstrap_command: String,
     #[serde(default = "default_true")]
     pub use_worktree: bool,
+    #[serde(default = "default_terminal_app")]
+    pub terminal_app: String,
     #[serde(default)]
     pub project_overrides: HashMap<String, ProjectOverrides>,
 }
 
 fn default_true() -> bool {
     true
+}
+
+fn default_terminal_app() -> String {
+    "iterm2".to_string()
 }
 
 impl Default for Preferences {
@@ -50,6 +56,7 @@ impl Default for Preferences {
             scroll_pause_secs: 5.0,
             bootstrap_command: "claude".to_string(),
             use_worktree: true,
+            terminal_app: "iterm2".to_string(),
             project_overrides: HashMap::new(),
         }
     }
@@ -80,6 +87,10 @@ impl Preferences {
         }
         if self.bootstrap_command.len() > 500 {
             return Err("Bootstrap command must be 500 characters or fewer".to_string());
+        }
+        match self.terminal_app.as_str() {
+            "iterm2" | "terminal" => {}
+            _ => return Err("Terminal app must be 'iterm2' or 'terminal'".to_string()),
         }
         for (path, overrides) in &self.project_overrides {
             if path.trim().is_empty() {
@@ -152,6 +163,7 @@ mod tests {
         assert_eq!(prefs.grid_columns, 2);
         assert_eq!(prefs.scroll_pause_secs, 5.0);
         assert_eq!(prefs.bootstrap_command, "claude");
+        assert_eq!(prefs.terminal_app, "iterm2");
         assert!(prefs.project_overrides.is_empty());
     }
 

@@ -347,6 +347,7 @@ pub fn list_client_tty(session_name: &str) -> Option<String> {
 }
 
 /// Return the TTY of the first connected tmux client (any session), if any.
+#[allow(dead_code)]
 pub fn list_any_client_tty() -> Option<String> {
     run_tmux(&["list-clients", "-F", "#{client_tty}"])
         .ok()
@@ -358,6 +359,21 @@ pub fn list_any_client_tty() -> Option<String> {
                 .filter(|l| !l.is_empty())
                 .map(|l| l.to_string())
         })
+}
+
+/// Return the TTYs of all connected tmux clients.
+pub fn list_all_client_ttys() -> Vec<String> {
+    run_tmux(&["list-clients", "-F", "#{client_tty}"])
+        .ok()
+        .map(|output| {
+            output
+                .trim()
+                .lines()
+                .filter(|l| !l.is_empty())
+                .map(|l| l.to_string())
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 /// Switch an existing tmux client (identified by TTY) to a different session.

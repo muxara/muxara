@@ -65,17 +65,21 @@ function SelectField({
   onChange,
 }: {
   def: SettingDefinition;
-  value: number;
-  onChange: (v: number) => void;
+  value: string | number;
+  onChange: (v: string | number) => void;
 }) {
   return (
     <select
       value={value}
-      onChange={(e) => onChange(parseInt(e.target.value, 10))}
+      onChange={(e) => {
+        const raw = e.target.value;
+        const matched = def.options?.find((o) => String(o.value) === raw);
+        onChange(matched ? matched.value : raw);
+      }}
       className="w-24 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm text-gray-200 focus:outline-none focus:border-blue-500"
     >
       {def.options?.map((opt) => (
-        <option key={opt.value} value={opt.value}>
+        <option key={String(opt.value)} value={opt.value}>
           {opt.label}
         </option>
       ))}
@@ -132,7 +136,7 @@ function SettingRow({
           ) : def.type === "select" ? (
             <SelectField
               def={def}
-              value={value as number}
+              value={value as string | number}
               onChange={(v) => onChange(v)}
             />
           ) : def.type === "text" ? (
