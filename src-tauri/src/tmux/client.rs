@@ -240,6 +240,17 @@ pub fn ensure_server() -> Result<(), TmuxError> {
         return Ok(());
     }
     run_tmux(&["start-server"])?;
+    // Pipe tmux mouse selections to the macOS system clipboard so that
+    // highlight-to-copy works in both Terminal.app and iTerm2.
+    // Bind MouseDragEnd in both emacs and vi copy modes to cover all users.
+    let _ = run_tmux(&[
+        "bind-key", "-T", "copy-mode", "MouseDragEnd1Pane",
+        "send-keys", "-X", "copy-pipe-and-cancel", "pbcopy",
+    ]);
+    let _ = run_tmux(&[
+        "bind-key", "-T", "copy-mode-vi", "MouseDragEnd1Pane",
+        "send-keys", "-X", "copy-pipe-and-cancel", "pbcopy",
+    ]);
     Ok(())
 }
 
