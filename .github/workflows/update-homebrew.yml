@@ -28,7 +28,7 @@ jobs:
           for f in ./assets/*aarch64*.dmg; do
             echo "ARM_SHA256=$(shasum -a 256 "$f" | cut -d' ' -f1)" >> "$GITHUB_ENV"
           done
-          for f in ./assets/*x86_64*.dmg; do
+          for f in ./assets/*x64*.dmg; do
             echo "INTEL_SHA256=$(shasum -a 256 "$f" | cut -d' ' -f1)" >> "$GITHUB_ENV"
           done
 
@@ -40,13 +40,13 @@ jobs:
 
       - name: Update cask formula
         run: |
-          cat > Casks/muxara.rb << 'CASK'
+          cat > Casks/muxara.rb << CASK
           cask "muxara" do
-            arch arm: "aarch64", intel: "x86_64"
+            arch arm: "aarch64", intel: "x64"
 
-            version "VERSION_PLACEHOLDER"
-            sha256 arm:   "ARM_SHA256_PLACEHOLDER",
-                   intel: "INTEL_SHA256_PLACEHOLDER"
+            version "$VERSION"
+            sha256 arm:   "$ARM_SHA256",
+                   intel: "$INTEL_SHA256"
 
             url "https://github.com/muxara/muxara/releases/download/v#{version}/Muxara_#{version}_#{arch}.dmg",
                 verified: "github.com/muxara/muxara/"
@@ -65,10 +65,8 @@ jobs:
           end
           CASK
 
-          # Replace placeholders with actual values
-          sed -i "s/VERSION_PLACEHOLDER/$VERSION/" Casks/muxara.rb
-          sed -i "s/ARM_SHA256_PLACEHOLDER/$ARM_SHA256/" Casks/muxara.rb
-          sed -i "s/INTEL_SHA256_PLACEHOLDER/$INTEL_SHA256/" Casks/muxara.rb
+      - name: Remove leading whitespace from formula
+        run: sed -i 's/^          //' Casks/muxara.rb
 
       - name: Commit and push
         run: |
