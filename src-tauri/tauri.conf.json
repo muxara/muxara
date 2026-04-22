@@ -14,6 +14,7 @@
       {
         "title": "Muxara",
         "titleBarStyle": "Overlay",
+        "acceptFirstMouse": true,
         "width": 1100,
         "height": 900,
         "minWidth": 480,
