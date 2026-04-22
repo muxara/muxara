@@ -1,6 +1,6 @@
 [package]
 name = "muxara"
-version = "0.1.0"
+version = "0.1.1"
 description = "Desktop control plane for managing parallel Claude Code sessions"
 authors = ["Muxara Contributors"]
 license = "MIT"

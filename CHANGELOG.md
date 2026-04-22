@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-04-22
+
+### Fixed
+
+- App could not find tmux when launched from Spotlight, Dock, or Homebrew install — PATH resolution now checks common Homebrew/MacPorts/system paths as fallback
+
 ## [0.1.0] - 2026-04-22
 
 ### Added
@@ -42,5 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Title bar drag reliability with overlay window style
 - Stable sort order for Working and Idle sessions using alphabetical tie-breaking within state tiers
 
-[Unreleased]: https://github.com/muxara/muxara/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/muxara/muxara/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/muxara/muxara/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/muxara/muxara/releases/tag/v0.1.0
