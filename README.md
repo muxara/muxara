@@ -11,13 +11,13 @@
 
 ## What is Muxara?
 
-Running multiple Claude Code sessions in parallel quickly becomes unwieldy. Which session needs your attention? Which is still working? Which one errored out ten minutes ago? Muxara solves this by providing a persistent, always-visible dashboard that shows the live status of every session at a glance. Click any session card to switch to it instantly in iTerm2, or use keyboard shortcuts to navigate without leaving the dashboard.
+Running multiple Claude Code sessions in parallel quickly becomes unwieldy. Which session needs your attention? Which is still working? Which one errored out ten minutes ago? Muxara solves this by providing a persistent, always-visible dashboard that shows the live status of every session at a glance. Click any session card to switch to it instantly in your terminal, or use keyboard shortcuts to navigate without leaving the dashboard.
 
 ## Features
 
 - **Live session dashboard** -- Auto-refreshing session cards showing status, working directory, and terminal output context
 - **Smart status classification** -- Sessions are classified as NeedsInput, Working, Idle, or Errored using regex-based pattern matching on pane output with temporal delta detection
-- **One-click session switching** -- Click a card to open or focus the tmux session in iTerm2
+- **One-click session switching** -- Click a card to open or focus the tmux session in Terminal.app or iTerm2
 - **Keyboard navigation** -- Arrow keys to move between cards in grid order, Enter to switch to the selected session
 - **New session creation** -- Create sessions with an optional name, directory picker, and inline command editing
 - **Automatic git worktree isolation** -- New sessions get isolated worktrees via Claude Code's `-w` flag, preventing conflicts between parallel sessions on the same repo
@@ -31,7 +31,7 @@ Running multiple Claude Code sessions in parallel quickly becomes unwieldy. Whic
 
 - **macOS 12+** (Monterey or later)
 - **tmux** -- `brew install tmux`
-- **iTerm2** -- [iterm2.com](https://iterm2.com/)
+- **Terminal.app** (built-in) or **iTerm2** -- [iterm2.com](https://iterm2.com/)
 - **Claude Code CLI** -- [claude.ai/code](https://claude.ai/code)
 
 ## Installation
@@ -60,7 +60,7 @@ The built app will be in `src-tauri/target/release/bundle/`.
 
 ## Quick Start
 
-1. Install Muxara and ensure tmux, iTerm2, and Claude Code are available on your system.
+1. Install Muxara and ensure tmux and Claude Code are available on your system.
 2. Launch Muxara. The dashboard appears as a compact, always-on-top overlay window.
 3. Click the **+** button in the header to create a new session.
 4. Choose a working directory and optionally name your session. The bootstrap command is pre-filled from your settings.
@@ -70,9 +70,9 @@ Repeat step 3 to spin up additional parallel sessions. Sessions that need your i
 
 ## Configuration
 
-Muxara includes a VS Code-style settings panel accessible from the dashboard. Configurable options include poll interval, grid columns, context zone height, output lines per card, Working-to-Idle cool-off period, and per-project bootstrap command overrides.
+Muxara includes a VS Code-style settings panel accessible from the dashboard. See [docs/settings.md](docs/settings.md) for a full reference of all configurable options.
 
-See [docs/architecture.md](docs/architecture.md) for detailed architecture documentation including module responsibilities, data flow, and key patterns.
+For technical details on architecture, module responsibilities, data flow, and key patterns, see [docs/architecture.md](docs/architecture.md).
 
 ## Contributing
 

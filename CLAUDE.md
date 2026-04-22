@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Muxara is a lightweight desktop application that serves as a control plane for developers running multiple parallel Claude Code sessions. It provides a persistent, always-visible dashboard showing session cards with status, context, and quick-switch capabilities. It builds on top of tmux as the session execution layer.
 
-See `plan.md` for the full product brief and design vision.
+See `docs/internal/original-brief.md` for the original product brief and design vision.
 
 ## Architecture
 

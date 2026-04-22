@@ -12,7 +12,7 @@ Muxara is a macOS-only desktop application. You will need the following installe
 | **Node.js** | 20+ | Used for the Vite dev server and frontend tooling |
 | **Rust** | Stable toolchain | Install via [rustup](https://rustup.rs/) |
 | **tmux** | Any recent version | `brew install tmux` -- Muxara manages tmux behind the scenes |
-| **iTerm2** | Any recent version | Session switching opens iTerm2 windows via AppleScript |
+| **Terminal.app or iTerm2** | Any recent version | Session switching opens terminal windows via AppleScript. Terminal.app is the default; configurable in settings |
 | **Claude Code CLI** | Any recent version | Needed if you want to create real test sessions |
 
 ## Development Setup
