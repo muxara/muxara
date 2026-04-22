@@ -7,8 +7,6 @@
 ![License](https://img.shields.io/github/license/muxara/muxara)
 ![macOS](https://img.shields.io/badge/platform-macOS_12%2B-blue)
 
-<img width="3435" height="1416" alt="image" src="https://github.com/user-attachments/assets/f3574845-821f-42e9-8b19-59655af50db1" />
-
 
 ## What is Muxara?
 
