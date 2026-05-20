@@ -15,12 +15,14 @@ static ANSI_CONTROL_RE: LazyLock<Regex> =
 
 const CAPTURE_SCROLLBACK_LINES: u32 = 200;
 
-/// Cached default tmux socket path.
+/// Cached UID for socket path computation.
 /// macOS apps launched from Spotlight/Dock get a different TMPDIR than terminal
-/// sessions, causing tmux to look for its socket in the wrong place. We resolve
-/// the canonical socket path once: /private/tmp/tmux-<uid>/default.
-static TMUX_SOCKET: LazyLock<Option<String>> = LazyLock::new(|| {
-    let uid = Command::new("id")
+/// sessions, causing tmux to look for its socket in the wrong place. We always
+/// pass `-S /private/tmp/tmux-<uid>/default` so that Muxara and terminal tmux
+/// share the same server, regardless of when the app starts relative to the
+/// tmux server.
+static TMUX_UID: LazyLock<u32> = LazyLock::new(|| {
+    Command::new("id")
         .arg("-u")
         .output()
         .ok()
@@ -30,20 +32,15 @@ static TMUX_SOCKET: LazyLock<Option<String>> = LazyLock::new(|| {
                 .parse::<u32>()
                 .ok()
         })
-        .unwrap_or(501);
-    let path = format!("/private/tmp/tmux-{}/default", uid);
-    if std::path::Path::new(&path).exists() {
-        Some(path)
-    } else {
-        // Also check without /private prefix
-        let path2 = format!("/tmp/tmux-{}/default", uid);
-        if std::path::Path::new(&path2).exists() {
-            Some(path2)
-        } else {
-            None
-        }
-    }
+        .unwrap_or(501)
 });
+
+/// Resolve the tmux socket path. Unlike caching the path existence at startup,
+/// this always returns the canonical path so that tmux creates/connects to the
+/// correct socket even if the server hasn't started yet.
+fn tmux_socket_path() -> String {
+    format!("/private/tmp/tmux-{}/default", *TMUX_UID)
+}
 
 /// Cached absolute path to the tmux binary.
 /// macOS apps launched from Spotlight/Dock don't inherit the user's shell PATH,
@@ -163,11 +160,10 @@ pub fn tmux_path() -> &'static str {
 
 fn run_tmux(args: &[&str]) -> Result<String, TmuxError> {
     let mut cmd = Command::new(tmux_path());
-    // Ensure we connect to the user's existing tmux server, even when
-    // launched from Spotlight/Dock where TMPDIR differs from the terminal.
-    if let Some(socket) = TMUX_SOCKET.as_deref() {
-        cmd.args(["-S", socket]);
-    }
+    // Always specify the socket path so Muxara connects to the same tmux
+    // server as the user's terminal, regardless of the app's TMPDIR.
+    let socket = tmux_socket_path();
+    cmd.args(["-S", &socket]);
     let output = cmd.args(args).env("TERM", "xterm-256color").output();
 
     match output {
