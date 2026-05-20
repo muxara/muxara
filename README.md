@@ -13,15 +13,15 @@
 
 ## What is Muxara?
 
-Running multiple Claude Code sessions in parallel quickly becomes unwieldy. Which session needs your attention? Which is still working? Which one errored out ten minutes ago? And when your terminal crashes or your Mac restarts, good luck finding and resuming them all.
+Running multiple Claude Code sessions in parallel quickly becomes unwieldy. Which session needs your attention? Which is still working? Which one errored out ten minutes ago? And when your terminal crashes, good luck finding and resuming them all.
 
-Muxara solves this by managing sessions inside tmux — they persist through terminal closes, app restarts, and machine restarts. No more lost sessions, no more `--resume` flags. Just reopen Muxara and everything is where you left it. The dashboard shows the live status of every session at a glance. Click any card to switch to it instantly, or use keyboard shortcuts to navigate without leaving the dashboard.
+Muxara solves this by managing sessions inside tmux — they persist through terminal closes and app restarts. No more lost sessions, no more `--resume` flags. Just reopen Muxara and everything is where you left it. The dashboard shows the live status of every session at a glance. Click any card to switch to it instantly, or use keyboard shortcuts to navigate without leaving the dashboard.
 
 Anthropic offers a paid [Claude Code Desktop](https://claude.ai/code) app with built-in multi-session support. Muxara is a free, open-source alternative for CLI power users who don't have access to that, or who prefer a lightweight dashboard on top of their existing terminal workflow. We hope projects like this encourage Anthropic to open-source the desktop experience for everyone.
 
 ## Features
 
-- **Persistent sessions** -- Sessions survive terminal crashes, app restarts, and machine restarts. Reopen Muxara and pick up exactly where you left off — no `--resume` needed
+- **Persistent sessions** -- Sessions survive terminal crashes and app restarts. Reopen Muxara and pick up exactly where you left off — no `--resume` needed
 - **Live session dashboard** -- Auto-refreshing session cards showing status, working directory, and terminal output context
 - **Smart status classification** -- Sessions are classified as NeedsInput, Working, Idle, or Errored using regex-based pattern matching on pane output with temporal delta detection
 - **One-click session switching** -- Click a card to open or focus the tmux session in Terminal.app or iTerm2
