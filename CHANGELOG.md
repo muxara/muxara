@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-05-20
+
+### Fixed
+
+- Session discovery failed on Spotlight/Dock launch — tmux outputs literal `\t` instead of tab characters when the process environment lacks shell setup; switched to `|||` delimiter that works regardless of environment
+
 ## [0.1.4] - 2026-05-20
 
 ### Fixed
@@ -71,7 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Title bar drag reliability with overlay window style
 - Stable sort order for Working and Idle sessions using alphabetical tie-breaking within state tiers
 
-[Unreleased]: https://github.com/muxara/muxara/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/muxara/muxara/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/muxara/muxara/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/muxara/muxara/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/muxara/muxara/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/muxara/muxara/compare/v0.1.1...v0.1.2

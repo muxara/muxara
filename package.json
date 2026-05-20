@@ -1,6 +1,6 @@
 {
   "name": "muxara",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Desktop control plane for managing parallel Claude Code sessions",
   "license": "MIT",
   "author": "Muxara Contributors",

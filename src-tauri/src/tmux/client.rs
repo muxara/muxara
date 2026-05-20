@@ -221,7 +221,7 @@ pub fn parse_sessions_output(output: &str) -> Vec<TmuxSessionInfo> {
         .lines()
         .filter(|l| !l.is_empty())
         .filter_map(|line| {
-            let parts: Vec<&str> = line.split('\t').collect();
+            let parts: Vec<&str> = line.split(TMUX_SEP).collect();
             if parts.len() < 4 {
                 return None;
             }
@@ -241,7 +241,7 @@ pub fn parse_panes_output(output: &str) -> Vec<TmuxPaneInfo> {
         .lines()
         .filter(|l| !l.is_empty())
         .filter_map(|line| {
-            let parts: Vec<&str> = line.split('\t').collect();
+            let parts: Vec<&str> = line.split(TMUX_SEP).collect();
             if parts.len() < 7 {
                 return None;
             }
@@ -335,12 +335,17 @@ pub fn ensure_server() -> Result<(), TmuxError> {
     Ok(())
 }
 
+/// Separator for tmux format strings. We use a multi-char delimiter instead of
+/// `\t` because tmux outputs literal `\t` (backslash + t) when the process
+/// environment lacks proper shell/locale setup (e.g. Spotlight/Dock launch).
+const TMUX_SEP: &str = "|||";
+
 pub fn list_sessions() -> Result<Vec<TmuxSessionInfo>, TmuxError> {
-    let output = run_tmux(&[
-        "list-sessions",
-        "-F",
-        "#{session_name}\t#{session_windows}\t#{session_created}\t#{session_attached}",
-    ]);
+    let format_str = format!(
+        "#{{session_name}}{0}#{{session_windows}}{0}#{{session_created}}{0}#{{session_attached}}",
+        TMUX_SEP
+    );
+    let output = run_tmux(&["list-sessions", "-F", &format_str]);
 
     match output {
         Ok(stdout) => Ok(parse_sessions_output(&stdout)),
@@ -350,13 +355,15 @@ pub fn list_sessions() -> Result<Vec<TmuxSessionInfo>, TmuxError> {
 }
 
 pub fn list_panes(session_name: Option<&str>) -> Result<Vec<TmuxPaneInfo>, TmuxError> {
-    let format_str =
-        "#{session_name}\t#{window_index}\t#{pane_index}\t#{pane_pid}\t#{pane_width}\t#{pane_height}\t#{pane_current_path}";
+    let format_str = format!(
+        "#{{session_name}}{0}#{{window_index}}{0}#{{pane_index}}{0}#{{pane_pid}}{0}#{{pane_width}}{0}#{{pane_height}}{0}#{{pane_current_path}}",
+        TMUX_SEP
+    );
 
     let output = if let Some(name) = session_name {
-        run_tmux(&["list-panes", "-F", format_str, "-t", name])
+        run_tmux(&["list-panes", "-F", &format_str, "-t", name])
     } else {
-        run_tmux(&["list-panes", "-F", format_str, "-a"])
+        run_tmux(&["list-panes", "-F", &format_str, "-a"])
     };
 
     match output {
@@ -579,7 +586,7 @@ mod tests {
 
     #[test]
     fn test_parse_list_sessions() {
-        let output = "muxara-1\t3\t1711929600\t1\nmuxara-2\t1\t1711929700\t0\n";
+        let output = "muxara-1|||3|||1711929600|||1\nmuxara-2|||1|||1711929700|||0\n";
         let sessions = parse_sessions_output(output);
         assert_eq!(sessions.len(), 2);
         assert_eq!(sessions[0].name, "muxara-1");
@@ -598,7 +605,7 @@ mod tests {
 
     #[test]
     fn test_parse_list_sessions_malformed() {
-        let output = "only-two\tfields\n";
+        let output = "only-two|||fields\n";
         assert!(parse_sessions_output(output).is_empty());
     }
 
@@ -606,7 +613,7 @@ mod tests {
 
     #[test]
     fn test_parse_list_panes() {
-        let output = "sess1\t0\t0\t12345\t200\t50\t/home/user/project\n";
+        let output = "sess1|||0|||0|||12345|||200|||50|||/home/user/project\n";
         let panes = parse_panes_output(output);
         assert_eq!(panes.len(), 1);
         assert_eq!(panes[0].session_name, "sess1");
@@ -620,7 +627,7 @@ mod tests {
 
     #[test]
     fn test_parse_list_panes_malformed() {
-        let output = "sess1\t0\t0\n"; // only 3 fields, need 7
+        let output = "sess1|||0|||0\n"; // only 3 fields, need 7
         assert!(parse_panes_output(output).is_empty());
     }
 
