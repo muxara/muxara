@@ -26,10 +26,10 @@ jobs:
 
           # Compute SHA256 for each architecture
           for f in ./assets/*aarch64*.dmg; do
-            echo "ARM_SHA256=$(shasum -a 256 "$f" | cut -d' ' -f1)" >> "$GITHUB_ENV"
+            echo "ARM_SHA256=$(sha256sum "$f" | cut -d' ' -f1)" >> "$GITHUB_ENV"
           done
           for f in ./assets/*x64*.dmg; do
-            echo "INTEL_SHA256=$(shasum -a 256 "$f" | cut -d' ' -f1)" >> "$GITHUB_ENV"
+            echo "INTEL_SHA256=$(sha256sum "$f" | cut -d' ' -f1)" >> "$GITHUB_ENV"
           done
 
       - name: Checkout homebrew tap
